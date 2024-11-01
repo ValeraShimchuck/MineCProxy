@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.10)
+
+#set(CMAKE_C_COMPILER "/usr/bin/gcc")
+#set(CMAKE_CXX_COMPILER "/usr/bin/g++")
+
+project(MINECPROXY)
+#find_library(Libs NAMES mylib paths /usr/local/lib /usr/lib) 
+#include_directories(/usr/local/include)
+#include_directories(${JNI_INCLUDE_DIRS})
+set(CMAKE_C_STANDARD 99)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+file(GLOB SOURCES "src/*.c")
+add_executable(MINECPROXY ${SOURCES})
