@@ -3,6 +3,8 @@
         "stdio.h": "c",
         "socket.h": "c",
         "stdlib.h": "c",
-        "math.h": "c"
+        "math.h": "c",
+        "stdarg.h": "c",
+        "config_serializer": "cpp"
     }
 }
