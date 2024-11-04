@@ -56,23 +56,15 @@ int createSocket() {
     return socket_id;
 }
 
+void bindSocket(int sockfd, char host_ip[4], int port) {
 
-void convertIp(char* strIp, char* ipBuffer) {
-    if (inet_pton(AF_INET, HOST_IP, ipBuffer) != 1)  {
-        printf("Could not convert ip %s", strIp);
-        exit(-1);
-    }
-}
-
-void bindSocket(int sockfd, char* strIp, int port) {
-    char host_ip[4];
-    //memset(host_ip, 0, 4);
-    convertIp(strIp, host_ip);
+    char strip[16];
+    string_to_ip(HOST_IP, strip);
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = *host_ip;
-    printf("host ip %s\n", strIp);
+    printf("host ip %s\n", strip);
     printf("host ip %d\n", (int) *host_ip);
     if (bind(sockfd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         perror("Could not bind socket");
@@ -235,11 +227,13 @@ void writeLong(struct buffer* buf, long long value) {
 }
 
 int main() {
+    struct config_data config = init_config();
+    println("Starting server on %s:%d", config.host, config.port);
     char* PING_RESPONSE = create_response();
     int socket = createSocket();
     server_socket = socket;
     signal(SIGINT, handle_sigint);
-    bindSocket(socket, HOST_IP, HOST_PORT);
+    bindSocket(socket, config.host, config.port);
     listen(socket, 10);
     while (/* condition */ true)
     {

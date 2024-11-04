@@ -6,11 +6,8 @@ set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 project(MINECPROXY)
 set(CMAKE_C_STANDARD 99)
 
-# Вкажіть директорію для заголовкових файлів
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/include)
-
-# Додаємо всі .c файли в один список SOURCES
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 file(GLOB SOURCES "src/*.c")
 
-# Створюємо виконуваний файл, передаючи всі джерела
 add_executable(MINECPROXY ${SOURCES})
+

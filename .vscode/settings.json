@@ -5,6 +5,8 @@
         "stdlib.h": "c",
         "math.h": "c",
         "stdarg.h": "c",
-        "config_serializer": "cpp"
-    }
+        "config_serializer": "cpp",
+        "config_serializer.h": "c"
+    },
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

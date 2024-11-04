@@ -1,29 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include "include/config_serializer.h"
+#include <stdbool.h>
+#include <arpa/inet.h>
+#include "config_serializer.h"
+#include "utilities.h"
 
-const char base64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-char* base64_encode(const unsigned char* data, size_t input_length, size_t* output_length) {
-    *output_length = 4 * ((input_length + 2) / 3);
-    char* encoded_data = malloc(*output_length + 1);
-    if (encoded_data == NULL) return NULL;
-    for (size_t i = 0, j = 0; i < input_length;) {
-        uint32_t octet_a = i < input_length ? data[i++] : 0;
-        uint32_t octet_b = i < input_length ? data[i++] : 0;
-        uint32_t octet_c = i < input_length ? data[i++] : 0;
-        uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
-        encoded_data[j++] = base64_table[(triple >> 3 * 6) & 0x3F];
-        encoded_data[j++] = base64_table[(triple >> 2 * 6) & 0x3F];
-        encoded_data[j++] = base64_table[(triple >> 1 * 6) & 0x3F];
-        encoded_data[j++] = base64_table[(triple >> 0 * 6) & 0x3F];
-    }
-    for (size_t i = 0; i < (3 - input_length % 3) % 3; i++)
-        encoded_data[*output_length - 1 - i] = '=';
-
-    encoded_data[*output_length] = '\0';
-    return encoded_data;
-}
 
 char* favicon_get() {
     const char* filepath = "./favicons/fv.png";
@@ -54,6 +35,7 @@ char* favicon_get() {
 
 char* create_response() {
     char* favicon_data = favicon_get();
+    println(favicon_data);
     char* formatted_response = malloc(20480);
     if (formatted_response == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
@@ -81,4 +63,92 @@ char* create_response() {
     }
 
     return formatted_response;
+}
+
+struct config_data config = {
+    .port = 25565,
+    .host = {127, 0, 0, 1},  // Default localhost in binary form
+    .max_players = 100,
+    .motd = "Minecraft Reverse Proxy",
+    .online_mode = false,
+    .server_count = 0
+};
+
+
+bool is_config_valid(const struct config_data *cfg) {
+    if (cfg->port <= 0 || cfg->port > 65535) return false;
+    if (cfg->max_players < 1 || cfg->max_players > 1000) return false;
+    if (cfg->motd == NULL || strlen(cfg->motd) == 0) return false;
+    for (int i = 0; i < cfg->server_count; ++i) {
+        if (cfg->servers[i].port <= 0 || cfg->servers[i].port > 65535) return false;
+    }
+    return true;
+}
+
+void write_default_config() {
+    FILE *fptr = fopen("config.yml", "w");
+    if (fptr) {
+        fprintf(fptr, "port: %d\n", config.port);
+        fprintf(fptr, "host: 127.0.0.1\n");
+        fprintf(fptr, "max_players: %d\n", config.max_players);
+        fprintf(fptr, "motd: \"%s\"\n", config.motd);
+        fprintf(fptr, "online_mode: %s\n", config.online_mode ? "true" : "false");
+        fprintf(fptr, "servers:\n");
+        for (int i = 0; i < config.server_count; ++i) {
+            char ip_str[INET_ADDRSTRLEN];
+            ip_to_string(config.servers[i].ip, ip_str);
+            fprintf(fptr, "  - \"%s:%d\" %s\n", ip_str, config.servers[i].port, config.servers[i].name);
+        }
+        fclose(fptr);
+    }
+}
+
+void parse_line(char *line) {
+    char key[50], value[50];
+    if (sscanf(line, "%49[^:]: %49[^\n]", key, value) == 2) {
+        if (strcmp(key, "port") == 0) config.port = (short)atoi(value);
+        else if (strcmp(key, "host") == 0) string_to_ip(value, config.host);
+        else if (strcmp(key, "max_players") == 0) config.max_players = atoi(value);
+        else if (strcmp(key, "motd") == 0) {
+            config.motd = strdup(value + 1);
+            config.motd[strlen(config.motd) - 1] = '\0';
+        } else if (strcmp(key, "online_mode") == 0) config.online_mode = (strcmp(value, "true") == 0);
+    } else if (sscanf(line, " - \"%49[^\"]\" %49s", value, key) == 2) {
+        if (config.server_count < MAX_SERVERS) {
+            char *ip_port = strtok(value, ":");
+            char *port_str = strtok(NULL, ":");
+            string_to_ip(ip_port, config.servers[config.server_count].ip);
+            config.servers[config.server_count].port = (short)atoi(port_str);
+            strncpy(config.servers[config.server_count].name, key, sizeof(config.servers[config.server_count].name) - 1);
+            config.server_count++;
+        }
+    }
+}
+
+struct config_data init_config() {
+    FILE *fptr = fopen("config.yml", "r");
+    if (fptr) {
+        char line[128];
+        while (fgets(line, sizeof(line), fptr)) {
+            parse_line(line);
+        }
+        fclose(fptr);
+    } else {
+        write_default_config();
+    }
+
+    if (!is_config_valid(&config)) {
+        printf("Invalid config found. Using default values.\n");
+        config = (struct config_data){
+            .port = 25565,
+            .host = {127, 0, 0, 1},
+            .max_players = 100,
+            .motd = "Minecraft Reverse Proxy",
+            .online_mode = false,
+            .server_count = 0
+        };
+        write_default_config();
+    }
+
+    return config;
 }
