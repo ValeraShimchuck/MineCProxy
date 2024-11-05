@@ -33,7 +33,7 @@ char* favicon_get() {
     return encoded_data;
 }
 
-char* create_response() {
+char* create_response(int protocol_version) {
     char* favicon_data = favicon_get();
     println(favicon_data);
     char* formatted_response = malloc(20480);
@@ -47,19 +47,19 @@ char* create_response() {
         favicon_data[max_data_length - 1] = '\0';
 
         snprintf(formatted_response, 20480,
-                 "{\"version\":{\"name\":\"1.8 - 1.21.x\",\"protocol\":767},"
+                 "{\"version\":{\"name\":\"1.8 - 1.21.x\",\"protocol\":%d},"
                  "\"players\":{\"max\":100,\"online\":0,\"sample\":[]},"
                  "\"description\":{\"text\":\"Minecraft Reverse Proxy\"},"
                  "\"favicon\":\"data:image/png;base64,%s\","
                  "\"enforcesSecureChat\":false}", 
-                 favicon_data);
+                 protocol_version, favicon_data);
     } else {
         snprintf(formatted_response, 20480,
-                 "{\"version\":{\"name\":\"1.8 - 1.21.x\",\"protocol\":767},"
+                 "{\"version\":{\"name\":\"1.8 - 1.21.x\",\"protocol\":%d},"
                  "\"players\":{\"max\":100,\"online\":0,\"sample\":[]},"
                  "\"description\":{\"text\":\"Minecraft Reverse Proxy\"},"
                  "\"favicon\":\"\","
-                 "\"enforcesSecureChat\":false}");
+                 "\"enforcesSecureChat\":false}", protocol_version);
     }
 
     return formatted_response;

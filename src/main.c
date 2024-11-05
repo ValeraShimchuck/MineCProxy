@@ -229,12 +229,12 @@ void writeLong(struct buffer* buf, long long value) {
 int main() {
     struct config_data config = init_config();
     println("Starting server on %s:%d", config.host, config.port);
-    char* PING_RESPONSE = create_response();
     int socket = createSocket();
     server_socket = socket;
     signal(SIGINT, handle_sigint);
     bindSocket(socket, config.host, config.port);
     listen(socket, 10);
+    int protocol_version = 0;
     while (/* condition */ true)
     {
         int client_fd = accept(socket, 0, 0);
@@ -271,7 +271,7 @@ int main() {
             }
             int packet_id = readVarInt(&accamulated_buffer);
             if (packet_id == 0 && state == 0) {
-                int protocol_version = readVarInt(&accamulated_buffer);
+                protocol_version = readVarInt(&accamulated_buffer);
                 int server_address_length = readVarInt(&accamulated_buffer);
                 char server_address[server_address_length + 1];
                 readBytes(&accamulated_buffer, server_address, server_address_length);
@@ -281,6 +281,7 @@ int main() {
                 state = next_state;
             }
             else if (packet_id == 0 && state == 1) {
+                char* PING_RESPONSE = create_response(protocol_version);
                 buffer send_buffer1 = createBuffer(20000);
                 buffer send_buffer2 = createBuffer(20000);
                 writeVarInt(&send_buffer1, 0);
@@ -291,6 +292,8 @@ int main() {
                 send(client_fd, send_buffer2.buffer, getBufferSize(&send_buffer2), 0);
                 freeBuffer(&send_buffer2);
                 freeBuffer(&send_buffer1);
+                free(PING_RESPONSE);
+
             } else if (packet_id == 1 && state == 1) {
                 long long payload = readLong(&accamulated_buffer);
                 buffer send_buffer1 = createBuffer(20);
