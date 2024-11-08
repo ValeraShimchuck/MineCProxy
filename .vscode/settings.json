@@ -6,7 +6,14 @@
         "math.h": "c",
         "stdarg.h": "c",
         "config_serializer": "cpp",
-        "config_serializer.h": "c"
+        "config_serializer.h": "c",
+        "utilities.h": "c",
+        "channels.h": "c",
+        "buffer.h": "c",
+        "pthread.h": "c",
+        "unistd.h": "c",
+        "errno.h": "c",
+        "errno-base.h": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }

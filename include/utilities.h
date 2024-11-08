@@ -2,6 +2,12 @@
 #define UTILITIES_H
 
 #include <stdarg.h> // Потрібно для підтримки varargs
+#include <stddef.h>
+#include <stdlib.h>
+
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX(a,b) ((a) > (b) ? (a) : (b))
+
 
 void println(char* str, ...);
 void printArray(char* array, int size);

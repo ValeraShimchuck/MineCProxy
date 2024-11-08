@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include "config_serializer.h"
 #include "utilities.h"
+#include <string.h>
 
 
 char* favicon_get() {
@@ -33,37 +34,60 @@ char* favicon_get() {
     return encoded_data;
 }
 
-char* create_response(int protocol_version) {
-    char* favicon_data = favicon_get();
-    println(favicon_data);
-    char* formatted_response = malloc(20480);
-    if (formatted_response == NULL) {
-        fprintf(stderr, "Memory allocation failed\n");
-        return NULL;
-    }
 
+
+void create_raw_response(char* resoponse) {
+    char* favicon_data = favicon_get();
     if (favicon_data != NULL) {
         size_t max_data_length = 20480 - 256;
         favicon_data[max_data_length - 1] = '\0';
-
-        snprintf(formatted_response, 20480,
-                 "{\"version\":{\"name\":\"1.8 - 1.21.x\",\"protocol\":%d},"
+        snprintf(resoponse, 20480,
+                 "{\"version\":{\"name\":\"1.8 - 1.21.x\",\"protocol\":%s},"
                  "\"players\":{\"max\":100,\"online\":0,\"sample\":[]},"
                  "\"description\":{\"text\":\"Minecraft Reverse Proxy\"},"
                  "\"favicon\":\"data:image/png;base64,%s\","
                  "\"enforcesSecureChat\":false}", 
-                 protocol_version, favicon_data);
-    } else {
-        snprintf(formatted_response, 20480,
-                 "{\"version\":{\"name\":\"1.8 - 1.21.x\",\"protocol\":%d},"
-                 "\"players\":{\"max\":100,\"online\":0,\"sample\":[]},"
-                 "\"description\":{\"text\":\"Minecraft Reverse Proxy\"},"
-                 "\"favicon\":\"\","
-                 "\"enforcesSecureChat\":false}", protocol_version);
-    }
+                 "%d", favicon_data);
+                
 
-    return formatted_response;
+    } 
+    free(favicon_data);
 }
+int apply_response(char* raw_response, char* destination, int protocol_version) {
+    return snprintf(destination, 20480, raw_response, protocol_version);
+}
+
+//void create_response(char* resoponse, int protocol_version) {
+//    char* favicon_data = favicon_get();
+//    println(favicon_data);
+//    char* formatted_response = malloc(20480);
+//    if (formatted_response == NULL) {
+//        fprintf(stderr, "Memory allocation failed\n");
+//        return NULL;
+//    }
+//
+//    if (favicon_data != NULL) {
+//        size_t max_data_length = 20480 - 256;
+//        favicon_data[max_data_length - 1] = '\0';
+//
+//        snprintf(resoponse, 20480,
+//                 "{\"version\":{\"name\":\"1.8 - 1.21.x\",\"protocol\":%d},"
+//                 "\"players\":{\"max\":100,\"online\":0,\"sample\":[]},"
+//                 "\"description\":{\"text\":\"Minecraft Reverse Proxy\"},"
+//                 "\"favicon\":\"data:image/png;base64,%s\","
+//                 "\"enforcesSecureChat\":false}", 
+//                 protocol_version, favicon_data);
+//    } else {
+//        snprintf(formatted_response, 20480,
+//                 "{\"version\":{\"name\":\"1.8 - 1.21.x\",\"protocol\":%d},"
+//                 "\"players\":{\"max\":100,\"online\":0,\"sample\":[]},"
+//                 "\"description\":{\"text\":\"Minecraft Reverse Proxy\"},"
+//                 "\"favicon\":\"\","
+//                 "\"enforcesSecureChat\":false}", protocol_version);
+//    }
+//
+//    return formatted_response;
+//}
 
 struct config_data config = {
     .port = 25565,
