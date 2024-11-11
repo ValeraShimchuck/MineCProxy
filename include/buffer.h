@@ -22,6 +22,7 @@ void writeByte(buffer* buf, char c);
 int readVarInt(buffer* buf);
 void writeVarInt(buffer* buf, int value);
 short readShort(buffer* buf);
+void writeShort(buffer* buf, short value);
 long long readLong(buffer* buf);
 void writeLong(buffer* buf, long long value);
 

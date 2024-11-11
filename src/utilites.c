@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <arpa/inet.h>
 #include "utilities.h"
+#include <fcntl.h>
+#include <errno.h>
 
 void println(char* str, ...) {
     va_list args;
@@ -12,6 +14,10 @@ void println(char* str, ...) {
     printf("\n");  // Add newline at the end
     
     va_end(args);
+}
+
+int is_fd_open(int fd) {
+    return fcntl(fd, F_GETFD) != -1 || errno != EBADF;
 }
 
 void printArray(char* array, int size) {

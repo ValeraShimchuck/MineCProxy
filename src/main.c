@@ -13,6 +13,7 @@
 #include "config_serializer.h"
 #include "buffer.h"
 #include "channels.h"
+#include <errno.h>
 
 #define HOST_PORT 25567
 #define BACKEND_PORT 25565
@@ -73,6 +74,7 @@ void bindSocket(int sockfd, char host_ip[4], int port) {
 }
 
 int main() {
+    signal(SIGPIPE, SIG_IGN);
     struct config_data config = init_config();
     println("Starting server on %s:%d", config.host, config.port);
     int socket = createSocket();
@@ -82,17 +84,25 @@ int main() {
     signal(SIGINT, handle_sigint);
     bindSocket(socket, config.host, config.port);
     listen(socket, 10);
-    init_channels(1);
-    create_channel(100);
+    init_channels(2);
+    create_channel(5, 0);
+    create_channel(5, 1);
     pthread_t thread_id;
+    pthread_t thread_id2;
     printf("Creating thread\n");
-    pthread_create(&thread_id, NULL, (void *) start_channel, (void *) {0});
+    pthread_create(&thread_id, NULL, (void *) start_channel_to_client, (void *) {0});
+    pthread_create(&thread_id2, NULL, (void *) start_channel_to_backend, (void *) {1});
     while (true ) {
         int client_fd = accept(socket, 0, 0);
+        if (client_fd < 0) {
+            printf("Could not accept connection %d\n", errno);
+            continue;
+        }
         printf("Accepted connection %d\n", client_fd);
         add_connection(0, client_fd);
         wake_up_channel(0);
     }
+    printf("Finished\n");
     //int protocol_version = 0;
     //while (/* condition */ true)
     //{

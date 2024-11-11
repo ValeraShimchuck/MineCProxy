@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 
 const int SEG_BITS = 0x7F;
@@ -76,7 +77,7 @@ int tryReadVarInt(buffer* buf) {
 
 void writeBytes(buffer* buf, char* buffer, int size) {
     if (buf->write_index + size > buf->size) {
-        printf("Buffer overflow %d size: %d", buf->write_index, size);
+        printf("Buffer overflow %d size: %d buffer size: %d", buf->write_index, size, buf->size);
         exit(-1);
     }
     memcpy(buf->buffer + buf->write_index, buffer, size);
@@ -84,11 +85,18 @@ void writeBytes(buffer* buf, char* buffer, int size) {
 }
 
 void writeBuffer(buffer* dst, buffer* src, int size) {
-    int bytes_to_write = getBufferSize(src);
-    bytes_to_write = MIN(bytes_to_write, dst->size - dst->write_index);
-    bytes_to_write = MIN(bytes_to_write, size);
-    writeBytes(dst, src->buffer + src->read_index, bytes_to_write);
-    src->read_index += bytes_to_write;
+    int can_read = getBufferSize(src);
+    if (size > can_read) {
+        printf("[1]Buffer overflow size %d > btw: %d", size, can_read);
+        exit(-1);
+    }
+    int can_write = dst->size - dst->write_index;
+    if (size > can_write) {
+        printf("[2]Buffer overflow writer index %d can read: %d dst size: %d", dst->write_index, can_read, dst->size);
+        exit(-1);
+    }
+    writeBytes(dst, src->buffer + src->read_index, size);
+    src->read_index += size;
     //dst->write_index += bytes_to_write;
 }
 
@@ -131,6 +139,11 @@ short readShort(buffer* buf) {
     short value = 0;
     readBytes(buf, (char*) &value, 2);
     return ntohs(value);
+}
+
+void writeShort(buffer* buf, short value) {
+    value = htons(value);
+    writeBytes(buf, (char*) &value, 2);
 }
 
 uint64_t htonll(uint64_t value) {

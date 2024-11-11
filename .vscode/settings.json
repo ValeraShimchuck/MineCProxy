@@ -13,7 +13,9 @@
         "pthread.h": "c",
         "unistd.h": "c",
         "errno.h": "c",
-        "errno-base.h": "c"
+        "errno-base.h": "c",
+        "uuid.h": "c",
+        "stddef.h": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/gcc"
 }
